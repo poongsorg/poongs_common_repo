@@ -1,0 +1,16 @@
+name: build dotnet
+on: 
+  workflow_call:
+   inputs:
+    username:
+     required: true
+     type: string
+   secrets:
+    envPAT:
+     required: true
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
