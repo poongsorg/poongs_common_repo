@@ -12,11 +12,33 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: true
         steps:
         - uses: actions/checkout@v2
         
-        - uses: actions/setup-dotnet@v1
+        - name: Initialize CodeQL
+          uses: github/codeql-action/init@v1
+          with:
+            languages: ['csharp']
+            
+        - name: Auth NuGet
+          run: nuget sources add -Name ${{ env.nuget_feed_name }} -Source ${{ env.nuget_feed_source }} -username ${{ env.nuget_feed_source }} -password ${{ secrets.AZDO_PAT }}
+          #dotnet nuget add source “https://pkgs.dev.azure.com/<OrganizationName>/_packaging/<RegistryName>/nuget/v3/index.json" -n privatenpmregistrypackagesource -u <userName> -p ${{ secrets.AZURE_DEVOPS_PAT }} — store-password-in-clear-text
+        
+        
+        - name: Setup dotnet version to use
+          uses: actions/setup-dotnet@v1
  `          with:
-              dotnet-version: '3.1.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+              dotnet-version: '5.0.x' # SDK Version to use
+        - name: Restore
+          run: dotnet restore csproj
+        - name: Build
+          run: dotnet build --configuration Dev --no-restore ./Sample.csproj
+        - Publish
+          run: dotnet publish ./Sample.csproj -c Dev -o ./publishedapp
+        
         
         - run: dotnet build <my project>
+        - name: Perform CodeQL Analysis
+          uses: github/codeql-action/analyze@v1 #post build task
